@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>محاكاة قياس مقاومة مجهولة - تصنيف بلوم</title>
+<style>
+body{margin:0;padding:24px;background:#ffffff;font-family:Arial,Helvetica,sans-serif;}
+#lab-root{max-width:720px;margin:0 auto;color:#2c2c2a;--surface-1:#f1efe8;--border:#d3d1c7;--text-secondary:#5f5e5a;--text-muted:#888780;--bg-accent:#e6f1fb;--text-accent:#0c447c;--text-success:#27500a;--text-danger:#791f1f;}
+button{background:transparent;border:1px solid var(--border);border-radius:6px;padding:6px 12px;font-size:13px;color:#2c2c2a;cursor:pointer;font-family:inherit;}
+button:hover{background:var(--surface-1);}
+button.active{background:var(--bg-accent);border-color:var(--text-accent);color:var(--text-accent);}
+input[type=range]{accent-color:var(--text-accent);}
+.term{cursor:crosshair;}
+.term:hover{stroke-width:2.5;}
+.wire-line{cursor:pointer;}
+</style>
+</head>
+<body>
+<div id="lab-root">
+
+<h2 style="position:absolute;width:1px;height:1px;overflow:hidden">محاكاة تفاعلية لبناء دارة قياس مقاومة مجهولة يدويًا، مرتبطة بمستويات تصنيف بلوم الستة</h2>
+
+<h1 style="font-size:18px;font-weight:600;margin-bottom:1.25rem">محاكاة تفاعلية لبناء دارة قياس مقاومة مجهولة يدويًا، مرتبطة بمستويات تصنيف بلوم التعليمي الستة</h1>
+
+<div style="display:flex;justify-content:space-between;margin-bottom:1.25rem;gap:4px" id="dots"></div>
+
+<div style="background:var(--surface-1);border-radius:8px;padding:1rem;margin-bottom:1rem">
+<div style="font-size:12px;color:var(--text-muted)" id="step-badge"></div>
+<div style="font-size:16px;font-weight:600;margin-top:2px" id="step-title"></div>
+<div style="font-size:13px;color:var(--text-secondary);margin-top:6px" id="step-desc"></div>
+</div>
+
+<div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px">اسحب أي عنصر لتغيير موضعه. لتوصيل سلك: اضغط مطولاً على طرف (دائرة صغيرة بيضاء) واسحب إلى طرف آخر. لحذف سلك: انقر عليه.</div>
+
+<svg width="100%" viewBox="0 0 680 300" role="img" id="circuit-svg" style="margin-bottom:8px;background:#ffffff;border:1px solid #d3d1c7;border-radius:8px">
+<title>دارة قياس المقاومة القابلة للبناء يدويًا</title>
+<desc>عناصر دارة قابلة للسحب مع أطراف يمكن ربطها بأسلاك يبنيها الطالب بنفسه: بطارية، مقاومة متغيرة، أميتر، مقاومة مجهولة، فولتمتر</desc>
+<g id="connections-layer"></g>
+<line id="temp-wire" x1="0" y1="0" x2="0" y2="0" stroke="#185FA5" stroke-width="2" stroke-dasharray="4 3" style="display:none"/>
+
+<g id="comp-battery" onpointerdown="startDrag(event,'battery')">
+<rect x="0" y="0" width="36" height="30" rx="4" fill="#F1EFE8" stroke="#5F5E5A" stroke-width="1"/>
+<text x="18" y="19" text-anchor="middle" font-size="11" fill="#444441">+/-</text>
+<text x="18" y="46" text-anchor="middle" font-size="12" fill="#5f5e5a">بطارية</text>
+</g>
+<g id="comp-rheostat" onpointerdown="startDrag(event,'rheostat')">
+<rect x="0" y="0" width="120" height="36" rx="8" fill="#FAEEDA" stroke="#854F0B" stroke-width="1"/>
+<text x="60" y="22" text-anchor="middle" font-size="14" font-weight="600" fill="#633806">مقاومة متغيرة</text>
+</g>
+<g id="comp-ammeter" onpointerdown="startDrag(event,'ammeter')">
+<circle cx="0" cy="0" r="28" fill="#E6F1FB" stroke="#185FA5" stroke-width="1"/>
+<text x="0" y="5" text-anchor="middle" font-size="14" font-weight="600" fill="#0C447C">A</text>
+</g>
+<g id="comp-rx" onpointerdown="startDrag(event,'rx')">
+<rect x="0" y="0" width="80" height="38" rx="6" fill="#FAECE7" stroke="#993C1D" stroke-width="1"/>
+<text x="40" y="24" text-anchor="middle" font-size="14" font-weight="600" fill="#712B13">Rx</text>
+</g>
+<g id="comp-voltmeter" onpointerdown="startDrag(event,'voltmeter')">
+<circle cx="0" cy="0" r="24" fill="#E1F5EE" stroke="#0F6E56" stroke-width="1"/>
+<text x="0" y="5" text-anchor="middle" font-size="14" font-weight="600" fill="#085041">V</text>
+</g>
+<g id="terminals-layer"></g>
+</svg>
+
+<div id="circuit-status" style="font-size:12px;margin-bottom:12px;padding:8px 10px;border-radius:6px;background:var(--surface-1);color:var(--text-secondary)">ابدأ بتوصيل الأسلاك بين الأطراف.</div>
+
+<div id="panel-1">
+<div style="font-size:14px;font-weight:600;margin-bottom:8px">1) ما نص قانون أوم لدارة كهربائية؟</div>
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+<button onclick="quiz('q1',this,false)">V = I + R</button>
+<button onclick="quiz('q1',this,true)">V = I × R</button>
+<button onclick="quiz('q1',this,false)">I = V + R</button>
+</div>
+<div id="q1-fb" style="font-size:13px;min-height:18px;margin-bottom:16px"></div>
+<div style="font-size:14px;font-weight:600;margin-bottom:8px">2) أي جهاز يستخدم لقياس شدة التيار الكهربائي؟</div>
+<div style="display:flex;gap:8px;flex-wrap:wrap">
+<button onclick="quiz('q2',this,false)">الفولتمتر</button>
+<button onclick="quiz('q2',this,true)">الأميتر</button>
+<button onclick="quiz('q2',this,false)">الأوميتر</button>
+</div>
+<div id="q2-fb" style="font-size:13px;min-height:18px"></div>
+</div>
+
+<div id="panel-2" style="display:none">
+<div style="font-size:14px;font-weight:600;margin-bottom:8px">3) لقياس شدة التيار المار في Rx بدقة، يجب توصيل الأميتر...</div>
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+<button onclick="quiz('q3',this,true)">على التوالي مع Rx</button>
+<button onclick="quiz('q3',this,false)">على التوازي مع Rx</button>
+</div>
+<div id="q3-fb" style="font-size:13px;min-height:18px;margin-bottom:16px"></div>
+<div style="font-size:14px;font-weight:600;margin-bottom:8px">4) لقياس فرق الجهد بين طرفي Rx، يجب توصيل الفولتمتر...</div>
+<div style="display:flex;gap:8px;flex-wrap:wrap">
+<button onclick="quiz('q4',this,true)">على التوازي مع Rx</button>
+<button onclick="quiz('q4',this,false)">على التوالي مع Rx</button>
+</div>
+<div id="q4-fb" style="font-size:13px;min-height:18px"></div>
+</div>
+
+<div id="panel-sim" style="display:none">
+<div id="method-toggle-wrap" style="display:none;margin-bottom:12px">
+<label style="font-size:13px;color:var(--text-secondary);margin-left:8px">المطلوب بناؤه الآن:</label>
+<button id="btn-method-A" onclick="setMethod('A')">أ: فولتمتر عبر Rx فقط</button>
+<button id="btn-method-B" onclick="setMethod('B')">ب: فولتمتر عبر Rx والأميتر</button>
+</div>
+<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+<label style="font-size:13px;color:var(--text-secondary);min-width:130px">المقاومة المتغيرة (Ω)</label>
+<input type="range" min="5" max="200" value="50" step="1" id="rvar" style="flex:1" oninput="update()">
+<span id="rvar-out" style="font-size:14px;font-weight:600;min-width:52px;text-align:left">50 Ω</span>
+</div>
+<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:12px">
+<div style="background:var(--surface-1);border-radius:8px;padding:1rem">
+<div style="font-size:13px;color:var(--text-secondary)">قراءة الأميتر I</div>
+<div style="font-size:22px;font-weight:600" id="amm-out">-- A</div>
+</div>
+<div style="background:var(--surface-1);border-radius:8px;padding:1rem">
+<div style="font-size:13px;color:var(--text-secondary)">قراءة الفولتمتر V</div>
+<div style="font-size:22px;font-weight:600" id="volt-out">-- V</div>
+</div>
+</div>
+<div style="display:flex;gap:10px;margin-bottom:12px">
+<button onclick="record()">تسجيل القراءة</button>
+<button onclick="reset()">إعادة ضبط الجدول</button>
+<button onclick="clearWires()">مسح كل الأسلاك</button>
+</div>
+<table style="width:100%;font-size:13px;border-collapse:collapse">
+<thead><tr style="border-bottom:1px solid var(--border)">
+<th style="text-align:right;padding:6px 4px;color:var(--text-secondary)">#</th>
+<th style="text-align:right;padding:6px 4px;color:var(--text-secondary)">الطريقة</th>
+<th style="text-align:right;padding:6px 4px;color:var(--text-secondary)">V</th>
+<th style="text-align:right;padding:6px 4px;color:var(--text-secondary)">I</th>
+<th style="text-align:right;padding:6px 4px;color:var(--text-secondary)">Rx=V/I</th>
+</tr></thead>
+<tbody id="table-body"></tbody>
+</table>
+<div id="analysis-box" style="display:none;margin-top:12px;background:var(--bg-accent);border-radius:8px;padding:1rem;font-size:13px;color:var(--text-accent)"></div>
+</div>
+
+<div id="panel-5" style="display:none">
+<div style="font-size:14px;font-weight:600;margin-bottom:8px">لقياس مقاومة كبيرة القيمة (بضع كيلو أوم)، أي طريقة توصيل تعطي خطأ أقل؟</div>
+<div style="display:flex;gap:8px;flex-wrap:wrap">
+<button onclick="quiz('q5',this,true)">الطريقة أ (فولتمتر عبر Rx فقط)</button>
+<button onclick="quiz('q5',this,false)">الطريقة ب (فولتمتر عبر Rx والأميتر)</button>
+</div>
+<div id="q5-fb" style="font-size:13px;margin-top:8px"></div>
+<div style="font-size:13px;color:var(--text-secondary);margin-top:12px">لأن مقاومة الفولتمتر الداخلية كبيرة جدًا مقارنة بـ Rx، فإن التيار المتسرب عبرها يصبح ضئيلًا نسبيًا، فيقل الخطأ في الطريقة أ عندما تكون Rx كبيرة.</div>
+</div>
+
+<div id="panel-6" style="display:none">
+<div style="font-size:14px;font-weight:600;margin-bottom:8px">استنتاج Rx من ميل العلاقة البيانية V-I (طريقة الانحدار الخطي)</div>
+<svg width="100%" viewBox="0 0 560 280" id="plot-svg" style="background:#f1efe8;border-radius:8px"></svg>
+<div id="fit-result" style="font-size:13px;margin-top:10px;background:var(--bg-accent);border-radius:8px;padding:1rem;color:var(--text-accent)"></div>
+</div>
+
+<div style="display:flex;justify-content:space-between;margin-top:1.25rem">
+<button onclick="go(-1)">السابق</button>
+<button onclick="go(1)">التالي</button>
+</div>
+</div>
+
+<script>
+const R_TRUE=47, R_AMM=1, R_VOLT=2200, EMF=6, R_INT=1;
+let readings=[], method='A', step=1;
+const svgEl=document.getElementById('circuit-svg');
+const COMPONENTS={
+  battery:{terminals:{a:[0,15],b:[36,15]}},
+  rheostat:{terminals:{a:[0,18],b:[120,18]}},
+  ammeter:{terminals:{a:[-28,0],b:[28,0]}},
+  rx:{terminals:{a:[0,19],b:[80,19]}},
+  voltmeter:{terminals:{a:[-24,0],b:[24,0]}}
+};
+let positions={
+  battery:{x:40,y:130},
+  rheostat:{x:150,y:40},
+  ammeter:{x:420,y:56},
+  rx:{x:420,y:190},
+  voltmeter:{x:560,y:130}
+};
+let connections=[];
+
+function updateTransform(id){
+  document.getElementById('comp-'+id).setAttribute('transform','translate('+positions[id].x+','+positions[id].y+')');
+}
+function getTerminal(id,term){
+  const p=positions[id], off=COMPONENTS[id].terminals[term];
+  return [p.x+off[0], p.y+off[1]];
+}
+function toSvgCoords(evt){
+  const pt=svgEl.createSVGPoint();
+  pt.x=evt.clientX; pt.y=evt.clientY;
+  const ctm=svgEl.getScreenCTM();
+  if(!ctm) return {x:0,y:0};
+  const loc=pt.matrixTransform(ctm.inverse());
+  return {x:loc.x,y:loc.y};
+}
+
+function renderTerminals(){
+  const layer=document.getElementById('terminals-layer');
+  layer.innerHTML='';
+  Object.keys(COMPONENTS).forEach(comp=>{
+    ['a','b'].forEach(term=>{
+      const [x,y]=getTerminal(comp,term);
+      const c=document.createElementNS('http://www.w3.org/2000/svg','circle');
+      c.setAttribute('cx',x); c.setAttribute('cy',y); c.setAttribute('r',5);
+      c.setAttribute('fill','#ffffff'); c.setAttribute('stroke','#185FA5'); c.setAttribute('stroke-width','1.5');
+      c.setAttribute('class','term');
+      c.addEventListener('pointerdown', e=>startWire(e,comp,term));
+      layer.appendChild(c);
+    });
+  });
+}
+
+function renderConnections(){
+  const layer=document.getElementById('connections-layer');
+  layer.innerHTML='';
+  connections.forEach((c,i)=>{
+    const [x1,y1]=getTerminal(c.c1,c.t1), [x2,y2]=getTerminal(c.c2,c.t2);
+    const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1',x1); line.setAttribute('y1',y1); line.setAttribute('x2',x2); line.setAttribute('y2',y2);
+    line.setAttribute('stroke','#3d3d3a'); line.setAttribute('stroke-width','2.5'); line.setAttribute('class','wire-line');
+    line.addEventListener('click', ()=>{ connections.splice(i,1); renderConnections(); onCircuitChanged(); });
+    layer.appendChild(line);
+  });
+}
+
+let dragId=null, dragOffset={x:0,y:0};
+function startDrag(e,id){
+  e.preventDefault();
+  dragId=id;
+  const p=toSvgCoords(e);
+  dragOffset.x=p.x-positions[id].x;
+  dragOffset.y=p.y-positions[id].y;
+  document.addEventListener('pointermove',onDragMove);
+  document.addEventListener('pointerup',endDrag);
+}
+function onDragMove(e){
+  if(!dragId) return;
+  const p=toSvgCoords(e);
+  let nx=Math.max(20,Math.min(600,p.x-dragOffset.x));
+  let ny=Math.max(20,Math.min(255,p.y-dragOffset.y));
+  positions[dragId]={x:nx,y:ny};
+  updateTransform(dragId);
+  renderTerminals();
+  renderConnections();
+}
+function endDrag(){
+  dragId=null;
+  document.removeEventListener('pointermove',onDragMove);
+  document.removeEventListener('pointerup',endDrag);
+}
+
+let wiring=null;
+function startWire(e,comp,term){
+  e.stopPropagation(); e.preventDefault();
+  wiring={comp,term};
+  const [x,y]=getTerminal(comp,term);
+  const tw=document.getElementById('temp-wire');
+  tw.setAttribute('x1',x); tw.setAttribute('y1',y); tw.setAttribute('x2',x); tw.setAttribute('y2',y);
+  tw.style.display='block';
+  document.addEventListener('pointermove',moveWire);
+  document.addEventListener('pointerup',endWire);
+}
+function moveWire(e){
+  if(!wiring) return;
+  const p=toSvgCoords(e);
+  const tw=document.getElementById('temp-wire');
+  tw.setAttribute('x2',p.x); tw.setAttribute('y2',p.y);
+}
+function endWire(e){
+  if(!wiring) return;
+  const p=toSvgCoords(e);
+  let best=null, bestDist=16;
+  Object.keys(COMPONENTS).forEach(comp=>{
+    ['a','b'].forEach(term=>{
+      if(comp===wiring.comp && term===wiring.term) return;
+      const [x,y]=getTerminal(comp,term);
+      const d=Math.hypot(x-p.x,y-p.y);
+      if(d<bestDist){ bestDist=d; best={comp,term}; }
+    });
+  });
+  if(best){
+    const exists=connections.some(c=>
+      (c.c1===wiring.comp&&c.t1===wiring.term&&c.c2===best.comp&&c.t2===best.term)||
+      (c.c2===wiring.comp&&c.t2===wiring.term&&c.c1===best.comp&&c.t1===best.term));
+    if(!exists) connections.push({c1:wiring.comp,t1:wiring.term,c2:best.comp,t2:best.term});
+  }
+  document.getElementById('temp-wire').style.display='none';
+  wiring=null;
+  document.removeEventListener('pointermove',moveWire);
+  document.removeEventListener('pointerup',endWire);
+  renderConnections();
+  onCircuitChanged();
+}
+
+function clearWires(){ connections=[]; renderConnections(); onCircuitChanged(); }
+
+function ufCheck(){
+  const ids=[]; Object.keys(COMPONENTS).forEach(c=>['a','b'].forEach(t=>ids.push(c+'-'+t)));
+  const parent={}; ids.forEach(id=>parent[id]=id);
+  function find(x){ while(parent[x]!==x){ x=parent[x]; } return x; }
+  function union(a,b){ const ra=find(a), rb=find(b); if(ra!==rb) parent[ra]=rb; }
+  connections.forEach(c=>union(c.c1+'-'+c.t1, c.c2+'-'+c.t2));
+  const same=(a,b)=>find(a)===find(b);
+  const seriesOK = same('battery-b','rheostat-a') && same('rheostat-b','ammeter-a') && same('ammeter-b','rx-a') && same('rx-b','battery-a');
+  const voltOK = method==='A'
+    ? (same('voltmeter-a','rx-a') && same('voltmeter-b','rx-b'))
+    : (same('voltmeter-a','ammeter-a') && same('voltmeter-b','rx-b'));
+  return {seriesOK, voltOK};
+}
+
+function onCircuitChanged(){
+  const {seriesOK,voltOK}=ufCheck();
+  const box=document.getElementById('circuit-status');
+  if(seriesOK && voltOK){
+    box.textContent='الدارة متصلة بشكل صحيح — القراءات تعمل الآن (طريقة '+(method==='A'?'أ':'ب')+')';
+    box.style.background='var(--bg-accent)'; box.style.color='var(--text-accent)';
+  } else if(!seriesOK){
+    box.textContent='المسار التسلسلي غير مكتمل: يجب أن يمر التيار عبر البطارية والمقاومة المتغيرة والأميتر و Rx في حلقة مغلقة.';
+    box.style.background='var(--surface-1)'; box.style.color='var(--text-secondary)';
+  } else {
+    box.textContent='المسار التسلسلي مكتمل، لكن الفولتمتر غير موصول بشكل صحيح للطريقة المطلوبة.';
+    box.style.background='var(--surface-1)'; box.style.color='var(--text-secondary)';
+  }
+  update();
+}
+
+const levels=[
+{k:'التذكر',t:'استرجاع المفاهيم الأساسية',d:'أجب عن الأسئلة لاستعادة قانون أوم وأسماء أجهزة القياس.'},
+{k:'الفهم',t:'فهم طريقة التوصيل',d:'حدد كيف يوصل كل جهاز في الدارة: توالي أم توازي.'},
+{k:'التطبيق',t:'بناء الدارة والقياس',d:'وصّل الأسلاك بنفسك بين الأطراف لتكوين دارة صحيحة، ثم سجل 3 قراءات على الأقل.'},
+{k:'التحليل',t:'تحليل مصدر الخطأ',d:'أعد توصيل الفولتمتر وفق الطريقة ب، وسجل قراءات، ثم قارن بالطريقة أ.'},
+{k:'التقييم',t:'تقييم أفضل طريقة توصيل',d:'أجب عن أي طريقة توصيل أنسب حسب حجم المقاومة المجهولة.'},
+{k:'الإبداع',t:'تركيب طريقة أدق',d:'ارسم العلاقة البيانية بين V وI واستنتج Rx من ميل الخط، وقارنها بباقي الطرق.'}
+];
+
+function renderDots(){
+  const wrap=document.getElementById('dots');
+  wrap.innerHTML='';
+  levels.forEach((lv,i)=>{
+    const d=document.createElement('div');
+    const active=i+1===step;
+    d.style.cssText='flex:1;text-align:center;font-size:11px;padding:6px 2px;border-radius:6px;cursor:pointer;'+(active?'background:var(--bg-accent);color:var(--text-accent);font-weight:600;':'color:var(--text-muted);border:1px solid var(--border);');
+    d.textContent=(i+1)+'. '+lv.k;
+    d.onclick=()=>{step=i+1;render();};
+    wrap.appendChild(d);
+  });
+}
+
+function render(){
+  renderDots();
+  const lv=levels[step-1];
+  document.getElementById('step-badge').textContent='المستوى '+step+' من 6';
+  document.getElementById('step-title').textContent=lv.t;
+  document.getElementById('step-desc').textContent=lv.d;
+  document.getElementById('panel-1').style.display=step===1?'block':'none';
+  document.getElementById('panel-2').style.display=step===2?'block':'none';
+  document.getElementById('panel-sim').style.display=(step===3||step===4)?'block':'none';
+  document.getElementById('panel-5').style.display=step===5?'block':'none';
+  document.getElementById('panel-6').style.display=step===6?'block':'none';
+  document.getElementById('method-toggle-wrap').style.display=step===4?'block':'none';
+  document.getElementById('analysis-box').style.display='none';
+  if(step<4){ method='A'; }
+  document.getElementById('btn-method-A').className = method==='A' ? 'active' : '';
+  document.getElementById('btn-method-B').className = method==='B' ? 'active' : '';
+  if(step===4) updateAnalysis();
+  if(step===6) drawPlot();
+  onCircuitChanged();
+}
+
+function go(dir){ step=Math.min(6,Math.max(1,step+dir)); render(); }
+
+function quiz(id,btn,correct){
+  const fb=document.getElementById(id+'-fb');
+  fb.textContent = correct ? 'إجابة صحيحة.' : 'إجابة غير دقيقة، حاول مرة أخرى.';
+  fb.style.color = correct ? 'var(--text-success)' : 'var(--text-danger)';
+}
+
+function setMethod(m){
+  method=m;
+  document.getElementById('btn-method-A').className = method==='A' ? 'active' : '';
+  document.getElementById('btn-method-B').className = method==='B' ? 'active' : '';
+  onCircuitChanged();
+}
+
+function calc(rv){
+  let I,V;
+  if(method==='A'){
+    const totalR = R_INT + R_AMM + rv + (R_TRUE*R_VOLT/(R_TRUE+R_VOLT));
+    const Itot = EMF/totalR;
+    V = Itot*(R_TRUE*R_VOLT/(R_TRUE+R_VOLT));
+    I = Itot;
+  } else {
+    const totalR = R_INT + rv + R_AMM + R_TRUE;
+    I = EMF/totalR;
+    V = I*(R_AMM+R_TRUE);
+  }
+  const noise=()=>1+(Math.random()-0.5)*0.02;
+  return {I:I*noise(), V:V*noise()};
+}
+
+function update(){
+  const rv=parseFloat(document.getElementById('rvar').value);
+  document.getElementById('rvar-out').textContent=rv+' Ω';
+  const {seriesOK,voltOK}=ufCheck();
+  if(seriesOK && voltOK){
+    const {I,V}=calc(rv);
+    document.getElementById('amm-out').textContent=I.toFixed(3)+' A';
+    document.getElementById('volt-out').textContent=V.toFixed(2)+' V';
+  } else {
+    document.getElementById('amm-out').textContent='-- A';
+    document.getElementById('volt-out').textContent='-- V';
+  }
+}
+
+function record(){
+  const {seriesOK,voltOK}=ufCheck();
+  if(!(seriesOK && voltOK)){
+    document.getElementById('circuit-status').textContent='لا يمكن تسجيل قراءة: أكمل توصيل الدارة أولاً.';
+    return;
+  }
+  const rv=parseFloat(document.getElementById('rvar').value);
+  const {I,V}=calc(rv);
+  const R=V/I;
+  readings.push({V,I,R,method,step});
+  const tbody=document.getElementById('table-body');
+  const tr=document.createElement('tr');
+  tr.style.borderBottom='1px solid var(--border)';
+  tr.innerHTML='<td style="padding:6px 4px">'+readings.length+'</td><td style="padding:6px 4px">'+method+'</td><td style="padding:6px 4px">'+V.toFixed(2)+'</td><td style="padding:6px 4px">'+I.toFixed(3)+'</td><td style="padding:6px 4px">'+R.toFixed(2)+'</td>';
+  tbody.appendChild(tr);
+  if(step===4) updateAnalysis();
+}
+
+function reset(){
+  readings=[];
+  document.getElementById('table-body').innerHTML='';
+  document.getElementById('analysis-box').style.display='none';
+}
+
+function updateAnalysis(){
+  const A=readings.filter(r=>r.method==='A');
+  const B=readings.filter(r=>r.method==='B');
+  const box=document.getElementById('analysis-box');
+  if(A.length===0 && B.length===0){ box.style.display='none'; return; }
+  const avg=arr=>arr.length? arr.reduce((s,r)=>s+r.R,0)/arr.length : null;
+  const avgA=avg(A), avgB=avg(B);
+  let txt='القيمة الحقيقية لـ Rx = '+R_TRUE+' Ω<br>';
+  if(avgA!==null) txt+='متوسط الطريقة أ: '+avgA.toFixed(2)+' Ω (خطأ '+(Math.abs(avgA-R_TRUE)/R_TRUE*100).toFixed(1)+'%)<br>';
+  if(avgB!==null) txt+='متوسط الطريقة ب: '+avgB.toFixed(2)+' Ω (خطأ '+(Math.abs(avgB-R_TRUE)/R_TRUE*100).toFixed(1)+'%)';
+  box.innerHTML=txt;
+  box.style.display='block';
+}
+
+function drawPlot(){
+  const svg=document.getElementById('plot-svg');
+  const data=readings.filter(r=>r.method==='A');
+  if(data.length<2){
+    svg.innerHTML='<text x="280" y="140" text-anchor="middle" font-size="12" fill="#5f5e5a">سجّل قراءتين على الأقل بالطريقة أ في مرحلة التطبيق أو التحليل</text>';
+    document.getElementById('fit-result').textContent='';
+    return;
+  }
+  const maxI=Math.max(...data.map(d=>d.I))*1.15;
+  const maxV=Math.max(...data.map(d=>d.V))*1.15;
+  const x0=60,y0=230,w=460,h=190;
+  const sx=i=>x0+(i/maxI)*w;
+  const sy=v=>y0-(v/maxV)*h;
+  let s='<line x1="'+x0+'" y1="'+y0+'" x2="'+(x0+w)+'" y2="'+y0+'" stroke="#3d3d3a" stroke-width="1"/>';
+  s+='<line x1="'+x0+'" y1="'+y0+'" x2="'+x0+'" y2="'+(y0-h)+'" stroke="#3d3d3a" stroke-width="1"/>';
+  s+='<text x="'+(x0+w/2)+'" y="255" text-anchor="middle" font-size="12" fill="#5f5e5a">I (أمبير)</text>';
+  s+='<text x="20" y="'+(y0-h/2)+'" text-anchor="middle" font-size="12" fill="#5f5e5a">V (فولت)</text>';
+  let sumII=0,sumVI=0;
+  data.forEach(d=>{ sumII+=d.I*d.I; sumVI+=d.V*d.I; s+='<circle cx="'+sx(d.I).toFixed(1)+'" cy="'+sy(d.V).toFixed(1)+'" r="4" fill="#185FA5" stroke="none"/>'; });
+  const Rfit=sumVI/sumII;
+  s+='<line x1="'+sx(0)+'" y1="'+sy(0)+'" x2="'+sx(maxI).toFixed(1)+'" y2="'+sy(Rfit*maxI).toFixed(1)+'" stroke="#993C1D" stroke-width="1.5" fill="none"/>';
+  svg.innerHTML=s;
+  const avgSimple = data.reduce((s,r)=>s+r.R,0)/data.length;
+  document.getElementById('fit-result').innerHTML='الميل (من الانحدار الخطي) = Rx ≈ '+Rfit.toFixed(2)+' Ω (خطأ '+(Math.abs(Rfit-R_TRUE)/R_TRUE*100).toFixed(1)+'%)<br>متوسط النقاط المفردة = '+avgSimple.toFixed(2)+' Ω (خطأ '+(Math.abs(avgSimple-R_TRUE)/R_TRUE*100).toFixed(1)+'%)<br>القيمة الحقيقية = '+R_TRUE+' Ω<br>عادة يكون الانحدار الخطي أدق لأنه يستخدم جميع النقاط معًا ويقلل أثر التشتت العشوائي في كل قراءة منفردة.';
+}
+
+Object.keys(positions).forEach(updateTransform);
+renderTerminals();
+renderConnections();
+render();
+</script>
+</body>
+</html>
